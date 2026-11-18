@@ -8,6 +8,7 @@ import { AVATAR_COLORS, DIFFICULTY_LABEL, DIFFICULTIES, MAX_NAME, MAX_PROFILES }
 import type { App, Screen } from './app';
 import { avatar } from './avatar';
 import { bigButton, openModal } from './dialog';
+import { impressumLink } from './impressumDialog';
 import { openTeacherGate } from './teacher';
 
 export function profilesScreen(app: App): Screen {
@@ -18,7 +19,7 @@ export function profilesScreen(app: App): Screen {
   longPress(logo, 1500, () => openTeacherGate(app, root, () => app.showProfiles()));
   const title = el('div', 'home-head', `<h1>Maus-Training</h1><p>Wer spielt heute?</p>${cdLine()}`);
   const cards = el('div', 'cards');
-  root.append(logo, title, cards);
+  root.append(logo, title, cards, impressumLink(root));
 
   const last = app.store.data.last;
   const list = [...app.store.profiles].sort((a, b) => (a.id === last ? -1 : b.id === last ? 1 : a.created - b.created));

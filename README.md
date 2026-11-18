@@ -15,6 +15,7 @@ npm run build      # erzeugt dist/
 ```
 
 `dist/index.html` läuft auch per **Doppelklick** (ohne Webserver), z. B. von einem USB-Stick oder Netzlaufwerk. Den ganzen Ordner `dist/` weitergeben.
+Das Impressum (Regionalmanagement KUUSK) steht unten links auf Startseite und Übersicht (`src/impressum.ts`).
 Jeder Push auf `main` baut die App und veröffentlicht sie automatisch auf GitHub Pages (`.github/workflows/pages.yml`).
 
 ## Aufbau des Spiels

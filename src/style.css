@@ -376,6 +376,17 @@ path.mi-hit, path.mi-hit2 { --mi-base: #e9edf7; }
 .mi-chev { animation: michev 1s ease-in-out infinite; }
 @keyframes michev { 0%,100% { opacity: .35; } 50% { opacity: 1; } }
 
+/* ---------- Impressum ---------- */
+.impressum-link { position: absolute; left: 30px; bottom: 14px; z-index: 5; font-size: 17px; font-weight: 500; color: var(--slate); text-decoration: underline; text-underline-offset: 3px; padding: 6px 4px; }
+.impressum-link:hover { color: var(--blue); }
+.legal { width: 880px; max-width: 100%; text-align: left; font-size: 19px; line-height: 1.4; }
+.legal h2 { margin: 0 0 10px; font-size: 36px; font-weight: 700; color: var(--blue); }
+.legal h3 { margin: 18px 0 4px; font-size: 22px; font-weight: 600; color: var(--slate); }
+.legal p { margin: 0 0 8px; }
+.legal a { color: var(--blue); text-decoration: underline; }
+.legal-address { font-size: 21px; font-weight: 500; }
+.legal .actions { position: sticky; bottom: -28px; margin: 12px 0 -28px; padding: 12px 0 28px; background: #fff; }
+
 /* ---------- Lehrkraft ---------- */
 .modal.wide { width: 980px; }
 .teacher h2 { display: flex; align-items: center; gap: 12px; margin: 0 0 12px; font-size: 36px; font-weight: 700; color: var(--blue); }

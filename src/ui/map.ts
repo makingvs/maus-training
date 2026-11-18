@@ -7,6 +7,7 @@ import { DIFFICULTY_LABEL } from '../storage';
 import type { App, Screen } from './app';
 import { avatar } from './avatar';
 import { openCertificate } from './certificate';
+import { impressumLink } from './impressumDialog';
 import { openTeacherGate } from './teacher';
 
 const stars = (n: number): string =>
@@ -87,6 +88,6 @@ export function mapScreen(app: App, profileId: string): Screen {
     bottom.appendChild(go);
   }
 
-  root.append(top, worlds, bottom);
+  root.append(top, worlds, bottom, impressumLink(root));
   return { el: root };
 }
