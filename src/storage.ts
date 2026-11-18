@@ -1,14 +1,15 @@
-// Speicher auf dem Gerät (localStorage): Kinder, Sterne, Einstellungen der Lehrkraft.
+// Speicher auf dem Gerät (localStorage): Kinder, Sterne, Stufen, Einstellungen der Lehrkraft.
 import { LEVELS } from './levels';
-import type { Profile } from './progress';
+import type { Difficulty, Profile } from './progress';
 
-export const ANIMALS = ['🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼', '🐨', '🐯', '🦁', '🐸', '🐵', '🐷'];
+export type { Difficulty } from './progress';
+
+/** Farben für die Avatare (MINT2Go-Farben). */
+export const AVATAR_COLORS = ['#98C227', '#F0A030', '#E01070', '#38B8E8', '#3757A9', '#4D597C'];
 export const MAX_NAME = 14;
 export const MAX_PROFILES = 30;
 
-export type Difficulty = 'easy' | 'normal' | 'hard';
 export interface Settings {
-  difficulty: Difficulty;
   unlockAll: boolean;
   bigCursor: boolean;
 }
@@ -24,14 +25,28 @@ export interface StorageLike {
 }
 
 export const KEY = 'maus-training.v1';
-/** Größenfaktor der Ziele je Schwierigkeit */
-export const SIZE_SCALE: Record<Difficulty, number> = { easy: 1.25, normal: 1, hard: 0.8 };
 
-export const defaultSettings = (): Settings => ({ difficulty: 'normal', unlockAll: false, bigCursor: false });
+/**
+ * Stufen für unterschiedliche Altersgruppen:
+ *  size = Größe der Ziele, pace = Tempo (Ballons schneller, Zielscheiben kürzer sichtbar).
+ */
+export const DIFFICULTIES: Difficulty[] = ['easy', 'normal', 'hard'];
+export const SIZE_SCALE: Record<Difficulty, number> = { easy: 1.25, normal: 1, hard: 0.75 };
+export const PACE: Record<Difficulty, number> = { easy: 0.85, normal: 1, hard: 1.35 };
+export const DIFFICULTY_LABEL: Record<Difficulty, { name: string; age: string }> = {
+  easy: { name: 'Starter', age: 'ab 6 Jahre' },
+  normal: { name: 'Fortgeschritten', age: 'ab 9 Jahre' },
+  hard: { name: 'Profi', age: 'ab 12 Jahre' },
+};
+
+export const defaultSettings = (): Settings => ({ unlockAll: false, bigCursor: false });
 
 export function sanitizeName(raw: string): string {
   return raw.replace(/\s+/g, ' ').trim().slice(0, MAX_NAME).trim();
 }
+
+/** Anfangsbuchstabe für den Avatar. */
+export const initial = (name: string): string => (Array.from(name.trim())[0] ?? '?').toUpperCase();
 
 function normalize(raw: unknown): Data {
   const d: Data = { v: 1, profiles: [], settings: defaultSettings() };
@@ -42,7 +57,7 @@ function normalize(raw: unknown): Data {
     for (const p of r.profiles) {
       if (!p || typeof p !== 'object') continue;
       const q = p as Record<string, unknown>;
-      if (typeof q.id !== 'string' || typeof q.name !== 'string' || typeof q.animal !== 'string') continue;
+      if (typeof q.id !== 'string' || typeof q.name !== 'string') continue;
       if (ids.has(q.id)) continue;
       ids.add(q.id);
       const stars: Record<number, number> = {};
@@ -55,7 +70,8 @@ function normalize(raw: unknown): Data {
       d.profiles.push({
         id: q.id,
         name: sanitizeName(q.name) || '?',
-        animal: q.animal,
+        color: typeof q.color === 'string' && AVATAR_COLORS.includes(q.color) ? q.color : AVATAR_COLORS[d.profiles.length % AVATAR_COLORS.length],
+        level: DIFFICULTIES.includes(q.level as Difficulty) ? (q.level as Difficulty) : 'normal',
         stars,
         created: typeof q.created === 'number' ? q.created : 0,
       });
@@ -63,7 +79,6 @@ function normalize(raw: unknown): Data {
   }
   const s = r.settings as Record<string, unknown> | undefined;
   if (s && typeof s === 'object') {
-    if (s.difficulty === 'easy' || s.difficulty === 'normal' || s.difficulty === 'hard') d.settings.difficulty = s.difficulty;
     d.settings.unlockAll = s.unlockAll === true;
     d.settings.bigCursor = s.bigCursor === true;
   }
@@ -105,18 +120,16 @@ export class Store {
   profile(id: string | undefined): Profile | undefined {
     return this.data.profiles.find((p) => p.id === id);
   }
-  usedAnimals(): string[] {
-    return this.data.profiles.map((p) => p.animal);
-  }
 
-  addProfile(name: string, animal: string): Profile | null {
+  addProfile(name: string, color: string, level: Difficulty = 'normal'): Profile | null {
     const n = sanitizeName(name);
-    if (!n || !ANIMALS.includes(animal) || this.usedAnimals().includes(animal)) return null;
+    if (!n || !AVATAR_COLORS.includes(color) || !DIFFICULTIES.includes(level)) return null;
     if (this.data.profiles.length >= MAX_PROFILES) return null;
     const p: Profile = {
       id: 'k' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
       name: n,
-      animal,
+      color,
+      level,
       stars: {},
       created: Date.now(),
     };
@@ -135,6 +148,12 @@ export class Store {
   resetProgress(id: string): void {
     const p = this.profile(id);
     if (p) p.stars = {};
+    this.write();
+  }
+
+  setLevel(id: string, level: Difficulty): void {
+    const p = this.profile(id);
+    if (p && DIFFICULTIES.includes(level)) p.level = level;
     this.write();
   }
 

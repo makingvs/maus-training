@@ -10,6 +10,8 @@ export interface GameCtx {
   p: Params;
   /** Größenfaktor aus der Schwierigkeit (leicht 1,25 / normal 1 / schwer 0,8) */
   scale: number;
+  /** Tempo-Faktor der Stufe (Starter 0,85 / Fortgeschritten 1 / Profi 1,35) */
+  pace: number;
   rng: () => number;
   /** Bereich, in dem Spielfiguren stehen dürfen (unter der Kopfleiste) */
   play: Rect;

@@ -22,7 +22,7 @@ export const path: GameFactory = (ctx) => {
   const width = num(ctx.p, 'width') * ctx.scale;
   const half = width / 2;
   const total = polylineLength(pts);
-  const markR = Math.max(34, half - 6);
+  const markR = Math.max(26, half - 5);
   const start = pts[0];
   const goal = pts[pts.length - 1];
 

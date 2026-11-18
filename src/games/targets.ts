@@ -16,7 +16,7 @@ interface Target {
 export const targets: GameFactory = (ctx) => {
   const total = num(ctx.p, 'total');
   const r = num(ctx.p, 'r') * ctx.scale;
-  const life = num(ctx.p, 'life') / Math.min(ctx.scale, 1.15);
+  const life = num(ctx.p, 'life') / ctx.pace;
   const max = num(ctx.p, 'max');
   const active: Target[] = [];
   const byEl = new Map<HTMLElement, Target>();

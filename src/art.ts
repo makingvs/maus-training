@@ -30,7 +30,7 @@ export function polyPoints(n: number, outer: number, inner = outer, rot = -90): 
 
 /* ---------- Spielfiguren ---------- */
 
-export const starArt = (fill = '#FFD93B', face = true): string =>
+export const starArt = (fill = '#FFD93B', face = false): string =>
   svg(
     '0 0 100 100',
     `<polygon points="${polyPoints(5, 47, 21)}" fill="${fill}" stroke="#E59E00" stroke-width="4" stroke-linejoin="round"/>` +
@@ -301,31 +301,45 @@ export function mouseIcon(kind: MouseKind): string {
   );
 }
 
-/* ---------- Maskottchen ---------- */
+/* ---------- MINT2Go: Logo und Zierelemente ---------- */
 
-export type Mood = 'happy' | 'cheer' | 'oops';
+/**
+ * Logo (public/mint2go-logo.png, 1006 x 287 mit viel Rand) auf den Kern zugeschnitten:
+ * Zahnräder, Schriftzug und Zeile "MINT erleben". Höhe über CSS-Variable --h.
+ */
+export const logoMarkup = (cls = ''): string =>
+  `<div class="logo-crop ${cls}" role="img" aria-label="MINT2Go – MINT erleben"><img src="./mint2go-logo.png" alt="" draggable="false"></div>`;
 
-export function mascot(mood: Mood = 'happy'): string {
-  const mouth =
-    mood === 'cheer'
-      ? `<path d="M38 72 Q50 88 62 72Z" fill="#7a1f3d"/><path d="M42 78 Q50 84 58 78" fill="#ff7aa8"/>`
-      : mood === 'oops'
-        ? `<path d="M42 78 Q50 70 58 78" fill="none" stroke="${C.slate}" stroke-width="3.5" stroke-linecap="round"/>`
-        : `<path d="M40 72 Q50 82 60 72" fill="none" stroke="${C.slate}" stroke-width="3.5" stroke-linecap="round"/>`;
-  return svg(
-    '0 0 100 100',
-    `<circle cx="22" cy="28" r="17" fill="#c7cfe3" stroke="${C.slate}" stroke-width="3"/><circle cx="22" cy="28" r="10" fill="#F9A8D4"/>` +
-      `<circle cx="78" cy="28" r="17" fill="#c7cfe3" stroke="${C.slate}" stroke-width="3"/><circle cx="78" cy="28" r="10" fill="#F9A8D4"/>` +
-      `<ellipse cx="50" cy="58" rx="36" ry="33" fill="#dfe5f3" stroke="${C.slate}" stroke-width="3"/>` +
-      `<circle cx="37" cy="50" r="5" fill="${C.slate}"/><circle cx="63" cy="50" r="5" fill="${C.slate}"/>` +
-      `<circle cx="38.6" cy="48.4" r="1.6" fill="#fff"/><circle cx="64.6" cy="48.4" r="1.6" fill="#fff"/>` +
-      `<ellipse cx="50" cy="62" rx="6" ry="4.5" fill="${C.pink}"/>` +
-      mouth +
-      `<path d="M14 62 H28 M14 70 L28 67 M86 62 H72 M86 70 L72 67" stroke="${C.slate}" stroke-width="2" stroke-linecap="round"/>` +
-      `<circle cx="28" cy="66" r="5" fill="#F9A8D4" opacity=".6"/><circle cx="72" cy="66" r="5" fill="#F9A8D4" opacity=".6"/>`,
-    'mascot-svg',
-  );
+/** Zahnrad als Pfad (Zähne + Loch, Even-Odd). */
+export function gearPath(cx: number, cy: number, r: number, teeth = 10, hole = 0.34): string {
+  const pitch = (Math.PI * 2) / teeth;
+  const root = r * 0.78;
+  let d = '';
+  for (let i = 0; i < teeth; i++) {
+    const a = i * pitch;
+    const pts: [number, number][] = [
+      [a - pitch * 0.34, root],
+      [a - pitch * 0.2, r],
+      [a + pitch * 0.2, r],
+      [a + pitch * 0.34, root],
+    ];
+    for (const [ang, rad] of pts) d += `${d ? 'L' : 'M'}${(cx + Math.cos(ang) * rad).toFixed(2)} ${(cy + Math.sin(ang) * rad).toFixed(2)}`;
+  }
+  const h = r * hole;
+  return `${d}ZM${(cx + h).toFixed(2)} ${cy}A${h.toFixed(2)} ${h.toFixed(2)} 0 1 0 ${(cx - h).toFixed(2)} ${cy}A${h.toFixed(2)} ${h.toFixed(2)} 0 1 0 ${(cx + h).toFixed(2)} ${cy}Z`;
 }
+
+/** Drei Zahnräder in Blau, Orange und Pink – dezent als Hintergrund. */
+export const gearsMarkup = (): string =>
+  `<svg class="decor-gears" viewBox="0 0 200 160" aria-hidden="true">` +
+  `<path d="${gearPath(62, 100, 52, 12, 0.3)}" fill="${C.blue}" fill-rule="evenodd"/>` +
+  `<path d="${gearPath(132, 58, 40, 10, 0.34)}" fill="${C.orange}" fill-rule="evenodd"/>` +
+  `<circle cx="150" cy="118" r="30" fill="${C.pink}"/><circle cx="150" cy="118" r="11" fill="#fff"/>` +
+  `</svg>`;
+
+/** Die Linie aus dem Logo: grüner Punkt, orange und pinke Strecke, Ring. */
+export const cdLine = (): string =>
+  '<div class="cd-line" aria-hidden="true"><span class="dot"></span><span class="seg o"></span><span class="seg p"></span><span class="ring"></span></div>';
 
 export const trophyArt = (): string =>
   svg(

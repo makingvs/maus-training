@@ -1,10 +1,15 @@
 // Fortschritt, Freischaltung und Sterne – reine Logik, getestet in tests/progress.test.ts.
 import { LEVELS, WORLDS, levelById, type LevelDef, type WorldDef } from './levels';
 
+/** Stufe eines Kindes: easy = Starter (ab 6), normal = Fortgeschritten (ab 9), hard = Profi (ab 12). */
+export type Difficulty = 'easy' | 'normal' | 'hard';
+
 export interface Profile {
   id: string;
   name: string;
-  animal: string;
+  /** Avatar-Farbe (MINT2Go-Farben) */
+  color: string;
+  level: Difficulty;
   /** Beste Sternzahl (1–3) je Level-Nummer */
   stars: Record<number, number>;
   created: number;

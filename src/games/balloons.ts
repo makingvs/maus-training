@@ -17,7 +17,7 @@ interface Balloon {
 export const balloons: GameFactory = (ctx) => {
   const total = num(ctx.p, 'total');
   const r = num(ctx.p, 'r') * ctx.scale;
-  const speed = num(ctx.p, 'speed');
+  const speed = num(ctx.p, 'speed') * ctx.pace;
   const max = num(ctx.p, 'max');
   const colors = [C.pink, C.orange, C.sky, C.green, C.blue, '#FFD93B'];
   const list: Balloon[] = [];

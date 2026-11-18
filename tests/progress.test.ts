@@ -11,9 +11,10 @@ import {
   worldStars,
   type Profile,
 } from '../src/progress';
-import { ANIMALS, KEY, MAX_NAME, Store, sanitizeName, type StorageLike } from '../src/storage';
+import { AVATAR_COLORS, KEY, MAX_NAME, PACE, SIZE_SCALE, Store, initial, sanitizeName, type StorageLike } from '../src/storage';
+import { TEACHER_PASSWORD, checkPassword } from '../src/auth';
 
-const kid = (stars: Record<number, number> = {}): Profile => ({ id: 'a', name: 'Mia', animal: '🐭', stars, created: 0 });
+const kid = (stars: Record<number, number> = {}): Profile => ({ id: 'a', name: 'Mia', color: '#98C227', level: 'normal', stars, created: 0 });
 
 class Mem implements StorageLike {
   m = new Map<string, string>();
@@ -113,37 +114,38 @@ describe('Speicher', () => {
     expect(sanitizeName('   ')).toBe('');
   });
 
-  it('Kind anlegen: Tier nur einmal, Name nötig', () => {
+  it('Kind anlegen: Name und gültige Farbe nötig, Stufe wählbar', () => {
     const s = new Store(new Mem());
-    expect(s.addProfile('', ANIMALS[0])).toBeNull();
+    expect(s.addProfile('', AVATAR_COLORS[0])).toBeNull();
     expect(s.addProfile('Mia', 'X')).toBeNull();
-    const a = s.addProfile('Mia', ANIMALS[0]);
+    expect(s.addProfile('Mia', AVATAR_COLORS[0], 'wild' as never)).toBeNull();
+    const a = s.addProfile('Mia', AVATAR_COLORS[0]);
     expect(a?.name).toBe('Mia');
-    expect(s.addProfile('Ben', ANIMALS[0])).toBeNull(); // Tier vergeben
-    expect(s.addProfile('Ben', ANIMALS[1])).not.toBeNull();
+    expect(s.addProfile('Ben', AVATAR_COLORS[0], 'hard')?.level).toBe('hard'); // gleiche Farbe ist erlaubt
     expect(s.profiles).toHaveLength(2);
   });
 
   it('merkt nur Verbesserungen und übersteht Neuladen', () => {
     const mem = new Mem();
     const s = new Store(mem);
-    const p = s.addProfile('Mia', ANIMALS[0])!;
+    const p = s.addProfile('Mia', AVATAR_COLORS[0])!;
     expect(s.recordResult(p.id, 1, 2)).toBe(true);
     expect(s.recordResult(p.id, 1, 1)).toBe(false); // schlechter -> bleibt 2
     expect(s.recordResult(p.id, 1, 3)).toBe(true);
     expect(s.recordResult('gibtsnicht', 1, 3)).toBe(false);
-    s.setSettings({ difficulty: 'hard', unlockAll: true });
+    s.setSettings({ unlockAll: true });
+    s.setLevel(p.id, 'hard');
 
     const s2 = new Store(mem);
     expect(s2.profile(p.id)?.stars[1]).toBe(3);
-    expect(s2.settings.difficulty).toBe('hard');
+    expect(s2.profile(p.id)?.level).toBe('hard');
     expect(s2.settings.unlockAll).toBe(true);
     expect(s2.data.last).toBe(p.id);
   });
 
   it('Zurücksetzen und Löschen', () => {
     const s = new Store(new Mem());
-    const p = s.addProfile('Mia', ANIMALS[0])!;
+    const p = s.addProfile('Mia', AVATAR_COLORS[0])!;
     s.recordResult(p.id, 1, 3);
     s.resetProgress(p.id);
     expect(s.profile(p.id)?.stars).toEqual({});
@@ -160,26 +162,27 @@ describe('Speicher', () => {
       KEY,
       JSON.stringify({
         profiles: [
-          { id: 'a', name: 'Mia', animal: '🐭', stars: { 1: 99, 2: -3, 77: 3, x: 'y' } },
+          { id: 'a', name: 'Mia', animal: '🐭', color: 'rot', level: 'wild', stars: { 1: 99, 2: -3, 77: 3, x: 'y' } },
           { id: 'a', name: 'Doppelt', animal: '🐱', stars: {} },
           { name: 'ohne Id' },
           null,
         ],
-        settings: { difficulty: 'wild', unlockAll: 'ja' },
+        settings: { unlockAll: 'ja' },
         last: 'unbekannt',
       }),
     );
     const s = new Store(mem);
     expect(s.profiles).toHaveLength(1);
     expect(s.profiles[0].stars).toEqual({ 1: 3 });
-    expect(s.settings.difficulty).toBe('normal');
+    expect(s.profiles[0].level).toBe('normal'); // ungültig -> Standard
+    expect(AVATAR_COLORS).toContain(s.profiles[0].color);
     expect(s.settings.unlockAll).toBe(false);
     expect(s.data.last).toBeUndefined();
   });
 
   it('läuft auch ohne Speicher (z. B. gesperrter Browser)', () => {
     const s = new Store(null);
-    const p = s.addProfile('Mia', ANIMALS[0]);
+    const p = s.addProfile('Mia', AVATAR_COLORS[0]);
     expect(p).not.toBeNull();
     expect(s.recordResult(p!.id, 1, 3)).toBe(true);
   });
@@ -192,6 +195,34 @@ describe('Speicher', () => {
       },
     };
     const s = new Store(bad);
-    expect(() => s.addProfile('Mia', ANIMALS[0])).not.toThrow();
+    expect(() => s.addProfile('Mia', AVATAR_COLORS[0])).not.toThrow();
+  });
+});
+
+describe('Stufen', () => {
+  it('Starter hat größere Ziele und ruhigeres Tempo, Profi kleinere und schnelleres', () => {
+    expect(SIZE_SCALE.easy).toBeGreaterThan(SIZE_SCALE.normal);
+    expect(SIZE_SCALE.normal).toBeGreaterThan(SIZE_SCALE.hard);
+    expect(PACE.easy).toBeLessThan(PACE.normal);
+    expect(PACE.normal).toBeLessThan(PACE.hard);
+    expect(SIZE_SCALE.normal).toBe(1);
+    expect(PACE.normal).toBe(1);
+  });
+
+  it('Avatar-Buchstabe', () => {
+    expect(initial('mia')).toBe('M');
+    expect(initial('  émile')).toBe('É');
+    expect(initial('')).toBe('?');
+  });
+});
+
+describe('Lehrkraft-Passwort', () => {
+  it('nur das genaue Passwort, Groß-/Kleinschreibung zählt', () => {
+    expect(TEACHER_PASSWORD).toBe('LehrerIn');
+    expect(checkPassword('LehrerIn')).toBe(true);
+    expect(checkPassword('  LehrerIn ')).toBe(true);
+    expect(checkPassword('lehrerin')).toBe(false);
+    expect(checkPassword('Lehrerin')).toBe(false);
+    expect(checkPassword('')).toBe(false);
   });
 });

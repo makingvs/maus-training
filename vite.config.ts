@@ -9,6 +9,7 @@ export default defineConfig({
     outDir: 'dist',
     target: 'es2020',
     modulePreload: false,
+    assetsInlineLimit: 100000, // Schrift wird in das Bündel eingebettet (läuft so auch per Doppelklick)
     rollupOptions: { output: { format: 'iife', inlineDynamicImports: true } },
   },
   test: { include: ['tests/**/*.test.ts'] },

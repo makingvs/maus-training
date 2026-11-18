@@ -1,9 +1,8 @@
 // Urkunde zum Ausdrucken (A4 quer). Die Druckansicht blendet alles andere aus (siehe style.css, @media print).
-import { icon, mascot, trophyArt } from '../art';
+import { cdLine, icon, logoMarkup } from '../art';
 import { el, esc } from '../dom';
 import { WORLDS, worldById } from '../levels';
 import { totalStars, worldStars, type Profile } from '../progress';
-import type { App } from './app';
 import { bigButton } from './dialog';
 
 export function certificateText(profile: Profile, scope: number | 'all'): { headline: string; line: string; got: number; max: number } {
@@ -11,7 +10,7 @@ export function certificateText(profile: Profile, scope: number | 'all'): { head
     const max = WORLDS.reduce((n, w) => n + w.levels.length * 3, 0);
     return {
       headline: 'Maus-Profi',
-      line: 'hat das ganze Maus-Training gemeistert: Zeigen, Klicken, Doppelklick, Ziehen und Mausrad.',
+      line: 'hat das gesamte Maus-Training gemeistert: Zeigen, Klicken, Doppelklick, Ziehen und Mausrad.',
       got: totalStars(profile),
       max,
     };
@@ -25,19 +24,19 @@ export function certificateText(profile: Profile, scope: number | 'all'): { head
   };
 }
 
-export function openCertificate(_app: App, _host: HTMLElement, profile: Profile, scope: number | 'all'): void {
+export function openCertificate(profile: Profile, scope: number | 'all'): void {
   const t = certificateText(profile, scope);
   const date = new Date().toLocaleDateString('de-DE', { day: '2-digit', month: 'long', year: 'numeric' });
   const wrap = el('div', 'cert-wrap');
   const sheet = el('div', 'cert');
   sheet.innerHTML =
     `<div class="cert-border">` +
-    `<div class="cert-mascot l">${mascot('cheer')}</div><div class="cert-mascot r">${mascot('cheer')}</div>` +
-    `<div class="cert-trophy">${trophyArt()}</div>` +
+    `<div class="cert-logo">${logoMarkup('xl')}</div>` +
     `<h1>Urkunde</h1>` +
-    `<p class="cert-for">für</p>` +
-    `<div class="cert-name"><span>${profile.animal}</span>${esc(profile.name)}</div>` +
-    `<p class="cert-line">${esc(t.line)}</p>` +
+    `<div class="cert-line-deco">${cdLine()}</div>` +
+    `<p class="cert-for">Diese Urkunde erhält</p>` +
+    `<div class="cert-name">${esc(profile.name)}</div>` +
+    `<p class="cert-text">${esc(t.line)}</p>` +
     `<div class="cert-stars">${icon('star')}<b>${t.got}</b> von ${t.max} Sternen</div>` +
     `<div class="cert-foot"><div><span>${date}</span><small>Datum</small></div><div><span>&nbsp;</span><small>Unterschrift</small></div></div>` +
     `</div>`;

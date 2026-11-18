@@ -1,11 +1,13 @@
-// Weltkarte: 5 Welten mit je 3 Levels, Sterne, Urkunden.
-import { icon, mascot, worldIcon } from '../art';
+// Übersicht: 5 Welten mit je 3 Levels, Sterne, Urkunden.
+import { gearsMarkup, icon, logoMarkup, worldIcon } from '../art';
 import { el, esc, longPress } from '../dom';
 import { MAX_STARS, WORLDS } from '../levels';
 import { allDone, isUnlocked, nextToPlay, starsOf, totalStars, worldDone, worldStars } from '../progress';
+import { DIFFICULTY_LABEL } from '../storage';
 import type { App, Screen } from './app';
+import { avatar } from './avatar';
 import { openCertificate } from './certificate';
-import { openTeacher } from './teacher';
+import { openTeacherGate } from './teacher';
 
 const stars = (n: number): string =>
   [1, 2, 3].map((i) => `<span class="st ${i <= n ? 'on' : ''}">${icon('star')}</span>`).join('');
@@ -18,19 +20,24 @@ export function mapScreen(app: App, profileId: string): Screen {
   }
   const unlockAll = app.store.settings.unlockAll;
   const root = el('div', 'screen s-map');
+  root.insertAdjacentHTML('beforeend', gearsMarkup());
 
-  const kid = el('button', 'kidchip', `<span class="avatar">${profile.animal}</span><b>${esc(profile.name)}</b>${icon('people')}`);
+  const logo = el('div', 'map-logo', logoMarkup('small') + '<i class="ring"></i>');
+  longPress(logo, 1500, () => openTeacherGate(app, root, () => app.showMap(profileId)));
+
+  const kid = el(
+    'button',
+    'kidchip',
+    `${avatar(profile.name, profile.color)}<span class="kc-text"><b>${esc(profile.name)}</b><small>${DIFFICULTY_LABEL[profile.level].name}</small></span>${icon('people')}`,
+  );
   kid.type = 'button';
-  kid.title = 'Anderes Kind';
+  kid.title = 'Profil wechseln';
   kid.addEventListener('click', () => app.showProfiles());
 
   const total = el('div', 'totalstars', `${icon('star')}<b>${totalStars(profile)}</b><small>/ ${MAX_STARS}</small>`);
 
-  const mascotEl = el('div', 'hud-mascot', `<div class="mascot">${mascot('happy')}</div><i class="ring"></i>`);
-  longPress(mascotEl, 1500, () => openTeacher(app, root, () => app.showMap(profileId)));
-
   const top = el('div', 'topbar');
-  top.append(kid, total, mascotEl);
+  top.append(kid, total, logo);
 
   const worlds = el('div', 'worlds');
   const next = nextToPlay(profile);
@@ -45,7 +52,7 @@ export function mapScreen(app: App, profileId: string): Screen {
       const b = el(
         'button',
         'level' + (open ? '' : ' locked') + (next?.id === l.id ? ' next' : '') + (n > 0 ? ' done' : ''),
-        `<span class="num">${open ? l.id : icon('lock')}</span><span class="stars">${stars(n)}</span><small>${l.title}</small>`,
+        `<span class="num">${open ? l.id : icon('lock')}</span><span class="lv-text"><small>${l.title}</small><span class="stars">${stars(n)}</span></span>`,
       );
       b.type = 'button';
       b.disabled = !open;
@@ -58,7 +65,7 @@ export function mapScreen(app: App, profileId: string): Screen {
     if (done) {
       const t = el('button', 'cert-btn', `${icon('trophy')}<span>Urkunde</span>`);
       t.type = 'button';
-      t.addEventListener('click', () => openCertificate(app, root, profile, w.id));
+      t.addEventListener('click', () => openCertificate(profile, w.id));
       foot.appendChild(t);
     } else {
       foot.innerHTML = `<small class="wstars">${icon('star')} ${worldStars(profile, w)} / 9</small>`;
@@ -71,10 +78,10 @@ export function mapScreen(app: App, profileId: string): Screen {
   if (allDone(profile)) {
     const m = el('button', 'bigbtn ok master', `${icon('trophy')}<span>Maus-Profi-Urkunde</span>`);
     m.type = 'button';
-    m.addEventListener('click', () => openCertificate(app, root, profile, 'all'));
+    m.addEventListener('click', () => openCertificate(profile, 'all'));
     bottom.appendChild(m);
   } else if (next) {
-    const go = el('button', 'bigbtn ok go', `${icon('next')}<span>${starsOf(profile, 1) === 0 && totalStars(profile) === 0 ? 'Start' : 'Weiter'}</span>`);
+    const go = el('button', 'bigbtn ok go', `${icon('next')}<span>${totalStars(profile) === 0 ? 'Start' : 'Weiter'}</span>`);
     go.type = 'button';
     go.addEventListener('click', () => app.showLevel(profileId, next.id));
     bottom.appendChild(go);
