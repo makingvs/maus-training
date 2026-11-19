@@ -21,8 +21,18 @@ export function profilesScreen(app: App): Screen {
   const cards = el('div', 'cards');
   root.append(logo, title, cards, impressumLink(root));
 
-  const last = app.store.data.last;
-  const list = [...app.store.profiles].sort((a, b) => (a.id === last ? -1 : b.id === last ? 1 : a.created - b.created));
+  // Das Plus zum Anlegen steht immer links oben, danach die Profile: das neueste zuerst
+  if (app.store.profiles.length < MAX_PROFILES) {
+    const add = el(
+      'button',
+      'card add' + (app.store.profiles.length === 0 ? ' pulse' : ''),
+      `<span class="avatar xl plus">${icon('plus')}</span><b>Neu</b>`,
+    );
+    add.type = 'button';
+    add.addEventListener('click', () => newKid(app, root));
+    cards.appendChild(add);
+  }
+  const list = [...app.store.profiles].sort((a, b) => b.created - a.created); // stabil: gleiche Zeit = Speicherreihenfolge
   for (const p of list) {
     const c = el(
       'button',
@@ -35,16 +45,6 @@ export function profilesScreen(app: App): Screen {
       app.showMap(p.id);
     });
     cards.appendChild(c);
-  }
-  if (app.store.profiles.length < MAX_PROFILES) {
-    const add = el(
-      'button',
-      'card add' + (app.store.profiles.length === 0 ? ' pulse' : ''),
-      `<span class="avatar xl plus">${icon('plus')}</span><b>Neu</b>`,
-    );
-    add.type = 'button';
-    add.addEventListener('click', () => newKid(app, root));
-    cards.appendChild(add);
   }
 
   // Beim allerersten Start gleich fragen

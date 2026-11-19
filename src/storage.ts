@@ -133,7 +133,7 @@ export class Store {
       stars: {},
       created: Date.now(),
     };
-    this.data.profiles.push(p);
+    this.data.profiles.unshift(p); // neue Kinder stehen am Anfang der Liste
     this.data.last = p.id;
     this.write();
     return p;

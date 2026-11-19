@@ -123,6 +123,10 @@ describe('Speicher', () => {
     expect(a?.name).toBe('Mia');
     expect(s.addProfile('Ben', AVATAR_COLORS[0], 'hard')?.level).toBe('hard'); // gleiche Farbe ist erlaubt
     expect(s.profiles).toHaveLength(2);
+    // neue Kinder kommen an den Anfang der Liste
+    expect(s.profiles.map((p) => p.name)).toEqual(['Ben', 'Mia']);
+    s.addProfile('Cleo', AVATAR_COLORS[2]);
+    expect(s.profiles.map((p) => p.name)).toEqual(['Cleo', 'Ben', 'Mia']);
   });
 
   it('merkt nur Verbesserungen und übersteht Neuladen', () => {
